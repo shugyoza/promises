@@ -71,6 +71,17 @@ class KylePromise {
     then(thenCb, catchCb) {
         // to be able for chaining .then
         return new MyPromise((resolve, reject) => {
+            this.#thenCbs.push((result) => {
+                // this if is running when the chaining meets a .catch
+                // ...then().catch().then
+                // to skip to the next then
+                if (thenCb == null) {
+                    resolve(result)
+                    return
+                }
+            })
+
+
             if (thenCb != null) this.#thenCbs.push(cb);
             if (cathCb != null) this.#catchCbs.push(cb);
 
