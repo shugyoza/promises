@@ -52,6 +52,11 @@ class KylePromise {
         // we cannot resolve/reject multiple times, just once!
         if (this.#state !== STATE.PENDING) return;
 
+        if (value instanceof KylePromise) {
+            value.then(this.#onSuccessBind, this.#onFailBind);
+            return;
+        }
+
         this.#value = value;
         this.#state = STATE.FULFILLED;
         this.#runCallbacks();
@@ -60,12 +65,26 @@ class KylePromise {
 
     // must be private, so no one can access it, add #
     #onFail(value) {
-        // we cannot resolve/reject multiple times, just once!
-        if (this.#state !== STATE.PENDING) return;
+        // qmicrotask to put all this logic on the queue to wait until stack call cleared
+        // just a few seconds. we can use setTimeout to do this
+        queueMicrotask(() => {
+            // we cannot resolve/reject multiple times, just once!
+            if (this.#state !== STATE.PENDING) return;
 
-        this.#value = value;
-        this.#state = STATE.REJECTED;
-        this.#runCallbacks();
+            if (value instanceof KylePromise) {
+                value.then(this.#onSuccessBind, thi.#onFailBind);
+                return;
+            }
+
+            if (this.#catchCbs.length === 0) {
+                throw new UncaughtPromiseError(value)
+            }
+
+            this.#value = value;
+            this.#state = STATE.REJECTED;
+            this.#runCallbacks();
+        })
+
     }
 
     then(thenCb, catchCb) {
@@ -77,19 +96,34 @@ class KylePromise {
                 // success, to skip to the next then
                 if (thenCb == null) {
                     resolve(result)
-                    return
+                    return;
                 }
 
                 try {
+                    resolve(thenCb(result))
+                } catch (err) {
+                    // this catch so that on .then().catch().then();
+                    // when err thrown on first .then, will get us to the .catch
+                    reject(err)
+                }
+            })
 
+            this.#catchCbs.push((result) => {
+                if (catchCb == null) {
+                    reject(result);
+                    return;
+                }
+
+                try {
+                    resolve(catchCb(result))
                 } catch (err) {
                     reject(err)
                 }
             })
 
 
-            if (thenCb != null) this.#thenCbs.push(cb);
-            if (cathCb != null) this.#catchCbs.push(cb);
+            // if (thenCb != null) this.#thenCbs.push(cb);
+            // if (cathCb != null) this.#catchCbs.push(cb);
 
             this.#runCallbacks()
 
@@ -102,10 +136,114 @@ class KylePromise {
         this.then(undefined, cb)
     }
 
+    // finally never gets any result value passed onto it.
+    // e.g. p.then().finally().then()
+    // we want the result to skip (not invoked) by finally (but) invoked to the next .then
     finally(cb) {
+        return this.then((result) => {
+            cb(); // don't pass the result into this cb.
+            return result; // so that it got chained down with other promises
+        }, (result) => { // e.g. p.then().finally().catch()
+            cb()
+            throw result
+        });
+    }
 
+    static resolve(value) {
+        return new Promise((resolve) => {
+            resolve(value);
+        })
+    }
+
+    static reject(value) {
+        return new Promise((resolve, reject) => {
+            reject(value)
+        })
+    }
+
+    // e.g. Promise.all(promise1, promise2, promise3).then([val1, val2, val3]).catch((e =>))
+    static all(promises) {
+        const results = [];
+        let completedPromises = 0;
+        return new KylePromise((resolve, reject) => {
+            for (let i = 0; i < promises.length; i++) {
+                const promise = promises[i];
+                promise.then((value) => {
+                    completedPromises++;
+                    results[i] = value;
+                    if (completedPromises === promises.length) {
+                        resolve(value);
+                    }
+                }).catch(reject)
+            }
+        })
+    }
+
+    // it waits for all promises to settled, whether resolved or rejected
+    // so that all promises returned statuses and either values or reasons of rejection
+    static allSettled(promise) {
+        const results = [];
+        let completedPromises = 0;
+
+        // allSettled NEVER rejects, because every Resolve AND Reject will be served in results anyway
+        return new KylePromise((resolve/*, reject*/) => {
+            for (let i = 0; i < promises.length; i++) {
+                const promise = promises[i];
+                promise
+                .then((value) => {
+                    results[i] = {status: STATE.FULFILLED, value}
+                })
+                .catch((reason) => {
+                    results[i] = {status: STATE.REJECTED, reason}
+                })
+                .finally(() => {
+                    completedPromises++
+                    if (completedPromises === promises.length) {
+                        resolve(results);
+                    }
+                })
+            }
+        })
+    }
+
+    // serves the first promise that returns, regardless or result, either succeed or fail
+    static race(promises) {
+        return new KylePromise((resolve, reject) => {
+            promises.forEach((promise) => {
+                promise.then(resolve).catch(reject)
+            })
+        })
+    }
+
+    // serves the first promise that resolves, UNLESS every promise returns FAIL
+    static any(promises) {
+        const errs = [];
+        let rejectedPromises = 0;
+        return new KylePromise((resolve, reject) => {
+            for (let i = 0; i < promises.length; i++) {
+                let promise = promises[i];
+                promise
+                .then(resolve)
+                .catch((reason) => {
+                    rejectedPromises++;
+                    errs[i] = reason;
+                    if (rejectedPromises === promises.length) {
+                        reject(new AggregateError(errors, "All promises were rejected"))
+                    }
+                })
+            }
+        })
     }
 }
+
+class UncaughtPromiseError extends Error {
+    constructor(error) {
+        super(error)
+
+        this.stack = `(in promise) ${error.stack}`
+    }
+}
+
 
 module.exports = KylePromise;
 
