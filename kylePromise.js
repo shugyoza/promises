@@ -7,14 +7,32 @@ class KylePromise {
         }
     }
 
-    onSuccess() {
+    // must be private, so no one can access it, add #
+    #onSuccess(value) {
 
     }
 
-    onFail() {
+    // must be private, so no one can access it, add #
+    #onFail(value) {
+
+    }
+
+    then(cb) {
 
     }
 
 }
 
 module.exports = KylePromise;
+
+/*
+when highlighted, only .then, .catch, .finally options popped out in IDE,
+that means all other method must be private
+
+const p = new Promise(cb)
+p.then(() => {
+
+}).catch(() => {
+
+})
+*/
