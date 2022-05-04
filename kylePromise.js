@@ -70,6 +70,13 @@ class KylePromise {
         return new Promise();
     }
 
+    catch(cb) {
+
+    }
+
+    finally(cb) {
+        
+    }
 }
 
 module.exports = KylePromise;
