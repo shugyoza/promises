@@ -69,13 +69,14 @@ class KylePromise {
     }
 
     then(thenCb, catchCb) {
-        if (thenCb != null) this.#thenCbs.push(cb);
-        if (cathCb != null) this.#catchCbs.push(cb);
-
-        this.#runCallbacks()
-
         // to be able for chaining .then
-        return new Promise();
+        return new MyPromise((resolve, reject) => {
+            if (thenCb != null) this.#thenCbs.push(cb);
+            if (cathCb != null) this.#catchCbs.push(cb);
+
+            this.#runCallbacks()
+
+        });
     }
 
     // works exactly like then method, but instead adding to catchCbs,
