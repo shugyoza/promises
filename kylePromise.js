@@ -18,6 +18,9 @@ class KylePromise {
 
     // must be private, so no one can access it, add #
     #onSuccess(value) {
+        // we cannot resolve/reject multiple times, just once!
+        if (this.#state !== STATE.PENDING) return;
+
         this.#value = value
         this.#state = STATE.FULFILLED
 
@@ -25,6 +28,9 @@ class KylePromise {
 
     // must be private, so no one can access it, add #
     #onFail(value) {
+        // we cannot resolve/reject multiple times, just once!
+        if (this.#state !== STATE.PENDING) return;
+
         this.#value = value
         this.#state = STATE.REJECTED
     }
@@ -43,8 +49,8 @@ that means all other method must be private
 
 const p = new Promise( (resolve, reject) => {
     // Code
-    resolve('some value')
-    reject('some value')
+    resolve('value for success')
+    reject('value for error')
 })
 p.then(() => {
 
