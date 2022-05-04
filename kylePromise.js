@@ -5,6 +5,7 @@ const STATE = {
 }
 class KylePromise {
     #thenCbs = [];
+    #catchCbs = [];
     #state = STATE.PENDING
     #value =
 
@@ -17,10 +18,24 @@ class KylePromise {
     }
 
     #runCallbacks() {
+        // if state is success
         if (this.#state === STATE.FULFILLED) {
-
+            // iterate through all the callbacks in the array of then callbacks
+            this.#thenCbs.forEach((callback) => {
+                // and invoke each callback with the given success value
+                callback(this.#value);
+            });
+            // reset the thenCbs after invoking all of them, for the next run
+            this.#thenCbs = [];
         }
+        // if state is fail
         else if (this.#state === STATE.REJECTED) {
+            // iterate through all the callbacks in the array of catch callbacks
+            this.#catchCbs.forEach((callback) => {
+                // and invoke each callback with the given error value
+            });
+            // reset the catchCbs after invoking all of them, for the next run
+            this.#catchCbs = [];
 
         }
     }
@@ -48,6 +63,11 @@ class KylePromise {
 
     then(cb) {
         this.#thenCbs.push(cb)
+
+        this.#runCallbacks()
+
+        // to be able for chaining .then
+        return new Promise();
     }
 
 }
@@ -73,4 +93,7 @@ const p1 = new Promise(cb).then()
 p.then()
 p.then()
 // so we need to save cb in then method in an array
+
+// chaining
+p.then().then().then()
 */
