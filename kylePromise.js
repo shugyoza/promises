@@ -16,13 +16,23 @@ class KylePromise {
         }
     }
 
+    #runCallbacks() {
+        if (this.#state === STATE.FULFILLED) {
+
+        }
+        else if (this.#state === STATE.REJECTED) {
+
+        }
+    }
+
     // must be private, so no one can access it, add #
     #onSuccess(value) {
         // we cannot resolve/reject multiple times, just once!
         if (this.#state !== STATE.PENDING) return;
 
-        this.#value = value
-        this.#state = STATE.FULFILLED
+        this.#value = value;
+        this.#state = STATE.FULFILLED;
+        this.#runCallbacks();
 
     }
 
@@ -31,8 +41,9 @@ class KylePromise {
         // we cannot resolve/reject multiple times, just once!
         if (this.#state !== STATE.PENDING) return;
 
-        this.#value = value
-        this.#state = STATE.REJECTED
+        this.#value = value;
+        this.#state = STATE.REJECTED;
+        this.#runCallbacks();
     }
 
     then(cb) {
