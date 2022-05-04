@@ -1,4 +1,6 @@
 class KylePromise {
+    #thenCbs = [];
+
     constructor(cb) {
         try {
             cb(this.onSuccess, this.onFail)
@@ -18,7 +20,7 @@ class KylePromise {
     }
 
     then(cb) {
-
+        this.#thenCbs.push(cb)
     }
 
 }
@@ -35,4 +37,9 @@ p.then(() => {
 }).catch(() => {
 
 })
+
+const p1 = new Promise(cb).then()
+p.then()
+p.then()
+// so we need to save cb in then method in an array
 */
