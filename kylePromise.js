@@ -7,11 +7,18 @@ class KylePromise {
     #thenCbs = [];
     #catchCbs = [];
     #state = STATE.PENDING
-    #value =
+    #value
+    // we need this binding for chaining process
+    #onSuccessBind = this.#onSuccess.bind(this)
+    #onFailBind = this.#onFail.bind(this)
 
     constructor(cb) {
         try {
-            cb(this.onSuccess, this.onFail)
+            // won't work without binding on chaining
+            // cb(this.onSuccess, this.onFail)
+
+            // bound onSuccess/onFail to make sure the this ran in onSuccess/onFail properly
+            cb(this.#onSuccessBind, this.#onFailBind)
         } catch (err) {
             this.onFail(err)
         }
