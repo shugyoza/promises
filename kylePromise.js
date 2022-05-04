@@ -61,7 +61,7 @@ class KylePromise {
         this.#runCallbacks();
     }
 
-    then(cb) {
+    then(thenCb, catchCb) {
         this.#thenCbs.push(cb)
 
         this.#runCallbacks()
@@ -70,12 +70,16 @@ class KylePromise {
         return new Promise();
     }
 
+    // works exactly like then method, but instead adding to catchCbs,
+    // difference is then takes 2 cbs: thenCb and catchCb
     catch(cb) {
+        this.#catchCbs.push(cb)
 
+        this.#runCallbacks()
     }
 
     finally(cb) {
-        
+
     }
 }
 
