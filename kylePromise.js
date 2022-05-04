@@ -1,5 +1,12 @@
+const STATE = {
+    FULFILLED: 'fulfilled',
+    REJECTED: 'rejected',
+    PENDING: 'pending'
+}
 class KylePromise {
     #thenCbs = [];
+    #state = STATE.PENDING
+    #value =
 
     constructor(cb) {
         try {
@@ -11,12 +18,15 @@ class KylePromise {
 
     // must be private, so no one can access it, add #
     #onSuccess(value) {
+        this.#value = value
+        this.#state = STATE.FULFILLED
 
     }
 
     // must be private, so no one can access it, add #
     #onFail(value) {
-
+        this.#value = value
+        this.#state = STATE.REJECTED
     }
 
     then(cb) {
@@ -31,7 +41,11 @@ module.exports = KylePromise;
 when highlighted, only .then, .catch, .finally options popped out in IDE,
 that means all other method must be private
 
-const p = new Promise(cb)
+const p = new Promise( (resolve, reject) => {
+    // Code
+    resolve('some value')
+    reject('some value')
+})
 p.then(() => {
 
 }).catch(() => {
