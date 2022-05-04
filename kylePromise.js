@@ -74,9 +74,7 @@ class KylePromise {
     // works exactly like then method, but instead adding to catchCbs,
     // difference is then takes 2 cbs: thenCb and catchCb
     catch(cb) {
-        this.#catchCbs.push(cb)
-
-        this.#runCallbacks()
+        this.then(undefined, cb)
     }
 
     finally(cb) {
